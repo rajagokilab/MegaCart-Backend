@@ -64,6 +64,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'x-guest-cart-id',  # optional
 ]
+# CORS_ALLOWED_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "https://mega-cart-frontend.vercel.app/",
     "https://mega-cart-frontend.vercel.app"
