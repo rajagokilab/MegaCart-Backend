@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
-DEBUG = True  # Change to False for production
+DEBUG = False  # Change to False for production
 ALLOWED_HOSTS = ['*']
 
 # --- INSTALLED APPS ---
@@ -66,6 +66,7 @@ CORS_ALLOW_HEADERS = [
 ]
 CORS_ALLOWED_ORIGINS = [
     "https://mega-cart-frontend.vercel.app/",
+    "https://mega-cart-frontend.vercel.app"
     "http://localhost:5173",
     "http://127.0.0.1:8000",
 ]
