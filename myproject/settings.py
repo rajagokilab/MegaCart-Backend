@@ -65,7 +65,7 @@ CORS_ALLOW_HEADERS = [
     'x-guest-cart-id',  # optional
 ]
 CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-url.vercel.app",
+    "https://mega-cart-frontend.vercel.app/",
     "http://localhost:5173",
     "http://127.0.0.1:8000",
 ]
