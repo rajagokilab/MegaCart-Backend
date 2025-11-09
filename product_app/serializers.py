@@ -40,7 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'category', 'category_name', 
             'vendor', 'vendor_name', 
             'price', 'stock', 'image', 'image_url', 'is_published',
-            'reviews', 'average_rating', 'status'
+            'reviews', 'average_rating', 'status','created_at'
         ]
         read_only_fields = ['vendor', 'vendor_name', 'status']
 

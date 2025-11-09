@@ -45,3 +45,13 @@ class StorefrontUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('store_name', 'store_description', 'store_logo', 'store_banner')
+
+# In your users/serializers.py file
+
+from rest_framework import serializers
+from .models import CustomUser # Or wherever your CustomUser model is
+
+class AdminVendorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'store_name', 'is_approved']
