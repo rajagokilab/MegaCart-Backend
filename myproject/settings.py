@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # --- INSTALLED APPS ---
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'users',
     'order',
     'support',
+    
 ]
 
 # --- MIDDLEWARE ---
@@ -185,9 +186,11 @@ if DEBUG:
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
-    EMAIL_HOST_PASSWORD = 'eaaw smdg xdtz gnhv'
+    EMAIL_HOST_PASSWORD = 'kkje supr djoz lqwk'
     DEFAULT_FROM_EMAIL = f"MegaCart Support <{EMAIL_HOST_USER}>"
 
 else:
     # ✅ Render production → SMTP disabled (no crash)
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
