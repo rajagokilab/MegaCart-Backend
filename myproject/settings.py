@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
-DEBUG = False # Change to False for production
+DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 # --- INSTALLED APPS ---
@@ -172,5 +172,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
-EMAIL_HOST_PASSWORD = 'your-app-password'  # Use App Password for Gmail
+EMAIL_HOST_PASSWORD = 'eaaw smdg xdtz gnhv'  # Use App Password for Gmail
 DEFAULT_FROM_EMAIL = 'MegaCart Support <rajagokilavivek@gmail.com>'
