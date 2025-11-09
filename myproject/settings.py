@@ -166,14 +166,14 @@ DJOSER = {
 RAZORPAY_KEY_ID = 'rzp_test_Rc49M6OPR7fOLP'
 RAZORPAY_KEY_SECRET = 'YnqU7CngK6MOvzwX6TCKTIit'
 
-# --- EMAIL CONFIGURATION ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
-EMAIL_HOST_PASSWORD = 'eaaw smdg xdtz gnhv'  # Use App Password for Gmail
-DEFAULT_FROM_EMAIL = 'MegaCart Support <rajagokilavivek@gmail.com>'
+# # --- EMAIL CONFIGURATION ---
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
+# EMAIL_HOST_PASSWORD = 'eaaw smdg xdtz gnhv'  # Use App Password for Gmail
+# DEFAULT_FROM_EMAIL = 'MegaCart Support <rajagokilavivek@gmail.com>'
 
 
 import os
