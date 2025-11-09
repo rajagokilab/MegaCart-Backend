@@ -108,7 +108,7 @@ class PaymentVerificationView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found or already processed"}, status=404)
 
-        # ✅ Verify signature
+        # ✅ Verify Razorpay signature
         try:
             client.utility.verify_payment_signature({
                 "razorpay_order_id": rzp_order_id,
@@ -116,7 +116,7 @@ class PaymentVerificationView(APIView):
                 "razorpay_signature": rzp_signature,
             })
 
-            # ✅ Mark Paid
+            # ✅ Mark order as paid
             order.status = "Paid"
             order.razorpay_payment_id = rzp_payment_id
             order.razorpay_signature = rzp_signature
@@ -128,38 +128,49 @@ class PaymentVerificationView(APIView):
                 changed_by=request.user,
             )
 
-            # ✅ SEND EMAIL TO EACH VENDOR
+            # ✅ SEND EMAIL TO VENDORS (SAFE MODE)
             vendors_map = {}
             for item in order.items.all():
                 vendor_email = item.product.vendor.email
                 vendors_map.setdefault(vendor_email, []).append(item)
 
             for email, items_list in vendors_map.items():
+
+                # ✅ Prepare email content
                 subject = f"New Order Received (Order #{order.id})"
                 body = f"Dear Vendor,\n\nYou have new items to prepare:\n\n"
+
                 for item in items_list:
                     body += f"- {item.product.name} (Qty: {item.quantity})\n"
 
-                body += f"\nCustomer: {request.user.username}\nOrder ID: {order.id}\n"
-                body += "Please check your vendor dashboard.\n\nMegaCart Team"
-
-                send_mail(
-                    subject,
-                    body,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=False
+                body += (
+                    f"\nCustomer: {request.user.username}\n"
+                    f"Order ID: {order.id}\n"
+                    "Please check your vendor dashboard.\n\nMegaCart Team"
                 )
 
-            return Response({"message": "Payment verified and vendors notified."})
+                # ✅ IMPORTANT: This will NOT crash on Render
+                try:
+                    send_mail(
+                        subject,
+                        body,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=True,      # ✅ Email failure will NOT stop payment success
+                    )
+                except Exception as e:
+                    logger.error(f"Email sending failed (ignored): {str(e)}")
+
+            return Response({"message": "Payment verified successfully."})
 
         except razorpay.errors.SignatureVerificationError:
             order.status = "Failed"
             order.save()
             return Response({"error": "Payment verification failed"}, status=400)
+
         except Exception as e:
             logger.error(f"Payment verification error: {str(e)}", exc_info=True)
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": "Server error during verification"}, status=500)
 
 # ✅ CUSTOMER ORDER LIST
 class OrderListView(generics.ListAPIView):
@@ -189,9 +200,11 @@ class OrderStatusUpdateView(APIView):
 
     def patch(self, request, order_id):
         new_status = request.data.get("status")
-        order = get_object_or_404(Order, id=order_id)
 
+        order = get_object_or_404(Order, id=order_id)
         old_status = order.status
+
+        # ✅ Update order status
         order.status = new_status
         order.save()
 
@@ -201,23 +214,30 @@ class OrderStatusUpdateView(APIView):
             changed_by=request.user
         )
 
-        # ✅ Notify customer only on shipped/delivered AND only if changed
-        if new_status in ["Shipped", "Delivered"] and new_status != old_status:
+        # ✅ Only send email on Shipped or Delivered AND only if status changed
+        if new_status in ["Shipped", "Delivered"] and old_status != new_status:
+
+            # ✅ Prepare email content
+            subject = f"Your Order #{order.id} is now {new_status}"
+            message = (
+                f"Dear {order.user.username},\n\n"
+                f"Your order #{order.id} status has been updated to {new_status}.\n\n"
+                f"Thank you for shopping with MegaCart!"
+            )
+
+            # ✅ Render-safe email sending
             try:
-                subject = f"Your Order #{order.id} is now {new_status}"
-                message = (
-                    f"Dear {order.user.username},\n\n"
-                    f"Your order #{order.id} status has been updated to {new_status}.\n\n"
-                    f"Thank you for shopping with MegaCart!"
-                )
                 send_mail(
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
                     [order.user.email],
-                    fail_silently=False
+                    fail_silently=True  # ✅ Never crash server
                 )
             except Exception as e:
-                print("EMAIL ERROR:", e)
+                logger.error(f"Email sending failed (ignored): {str(e)}")
 
-        return Response({"message": "Status updated", "status": new_status})
+        return Response({
+            "message": "Status updated successfully",
+            "status": new_status
+        })
