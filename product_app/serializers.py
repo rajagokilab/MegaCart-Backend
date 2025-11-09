@@ -42,6 +42,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'price', 'stock', 'image', 'image_url', 'is_published',
             'reviews', 'average_rating', 'status'
         ]
+        read_only_fields = ['vendor', 'vendor_name', 'status']
 
     def get_image_url(self, obj):
         request = self.context.get("request", None)
