@@ -24,7 +24,8 @@ User = get_user_model()
 
 # Razorpay client
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
+import logging
+logger = logging.getLogger(__name__)
 
 # ✅ CREATE ORDER + RAZORPAY ORDER
 class CreateRazorpayOrder(APIView):
@@ -92,6 +93,7 @@ class PaymentVerificationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        logger.info(f"Payment payload received: {request.data}")
         rzp_order_id = request.data.get("razorpay_order_id")
         rzp_payment_id = request.data.get("razorpay_payment_id")
         rzp_signature = request.data.get("razorpay_signature")
@@ -155,7 +157,9 @@ class PaymentVerificationView(APIView):
             order.status = "Failed"
             order.save()
             return Response({"error": "Payment verification failed"}, status=400)
-
+        except Exception as e:
+            logger.error(f"Payment verification error: {str(e)}", exc_info=True)
+            return Response({"error": str(e)}, status=500)
 
 # ✅ CUSTOMER ORDER LIST
 class OrderListView(generics.ListAPIView):
