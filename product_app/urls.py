@@ -13,7 +13,6 @@ from .views import (
     CartDetailView,
     CartUpdateItemView,
     CartRemoveItemView,
-    SaveAddressView,
     VendorDashboardView,
     # You were missing these three imports:
     VendorStorefrontView,
@@ -47,12 +46,12 @@ urlpatterns = [
     # --- Router Includes (Category, Product, Reviews) ---
     path('', include(router.urls)),
     path('', include(products_router.urls)),
+    
 
     # --- Vendor & Dashboard Routes ---
     path('vendor/dashboard/', VendorDashboardView.as_view(), name='vendor-dashboard'),
 
     # --- User Account Management Routes ---
-    path('users/save_address/', SaveAddressView.as_view(), name='save-address'),
 
     # --- Cart Operations ---
     path('cart/add_item/', CartAddItemView.as_view(), name='cart-add-item'),

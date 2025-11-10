@@ -82,3 +82,36 @@ class ApproveVendorView(APIView):
             return Response(AdminVendorSerializer(vendor).data, status=status.HTTP_200_OK)
         
         return Response({"detail": "Invalid action."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # ------------------ ADDRESS VIEW ------------------
+from rest_framework import views, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+class SaveAddressView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        data = request.data
+
+        if not isinstance(data, dict):
+            return Response(
+                {"error": "Invalid data format. Must be a JSON object."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user.shipping_address = data
+            user.save(update_fields=['shipping_address'])
+
+            return Response(
+                {"message": "Address saved successfully."},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print(f"Error saving address for user {user.id}: {e}")
+            return Response(
+                {"error": "Internal server error while saving address."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

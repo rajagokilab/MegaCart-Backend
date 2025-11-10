@@ -12,10 +12,12 @@ urlpatterns = [
     path('api/', include('order.urls')),
 
     # User management / authentication
-    path('api/', include('users.urls')),            # your custom user endpoints
+    # path('api/', include('users.urls')),            # your custom user endpoints
     path('api/auth/', include('djoser.urls')),      # login/logout/user
     path('api/auth/', include('djoser.urls.jwt')),
       path('api/support/', include('support.urls')),
+      path('api/users/', include('users.urls')),
+
   # JWT login/logout
 ]
 
