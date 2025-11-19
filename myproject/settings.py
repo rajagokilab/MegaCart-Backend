@@ -216,6 +216,8 @@ RAZORPAY_KEY_SECRET = 'YnqU7CngK6MOvzwX6TCKTIit'
 # EMAIL_HOST_PASSWORD = os.environ.get('kkje supr djoz lqwk')
 # DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
 
+DEFAULT_FROM_EMAIL = "rajagokilavivek@gmail.com" 
+SERVER_EMAIL = "rajagokilavivek@gmail.com"
 
 
 import os
