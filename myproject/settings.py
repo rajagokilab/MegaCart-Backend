@@ -94,23 +94,25 @@ ROOT_URLCONF = 'myproject.urls'
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # --- DATABASE ---
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',  # Use PostgreSQL for prod
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vetricart_db',         
-        'USER': 'root',                  
-        'PASSWORD': '123456', 
-        'HOST': '127.0.0.1',             
-        'PORT': '3306',                  
+        'ENGINE': 'django.db.backends.sqlite3',  # Use PostgreSQL for prod
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# import os
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.environ.get('DB_NAME', 'vetricart_db'),      # Default to local name
+#         'USER': os.environ.get('DB_USER', 'root'),              # Default to local user
+#         'PASSWORD': os.environ.get('DB_PASSWORD', '123456'),    # Default to local password
+#         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),         # Default to localhost
+#         'PORT': os.environ.get('DB_PORT', '3306'),
+#     }
+# }
 
 # --- AUTH ---
 AUTH_USER_MODEL = 'users.CustomUser'
