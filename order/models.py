@@ -1,7 +1,8 @@
+# order/models.py
 from django.db import models
 from django.conf import settings
-# Import your Product model
 from product_app.models import Product 
+from decimal import Decimal # Make sure this is imported
 
 # -----------------------------
 # 1️⃣ Cart Model
@@ -60,35 +61,39 @@ class Order(models.Model):
     # Shipping address (copied from user at time of order)
     shipping_address = models.JSONField(null=True, blank=True)
 
+    tracking_number = models.CharField(max_length=100, blank=True, null=True)
+
     def __str__(self):
         return f"Order {self.id} by {self.user.email if self.user else 'Deleted User'} ({self.status})"
 
 # -----------------------------
-# 4️⃣ OrderItem Model
+# 4️⃣ OrderItem Model (FIXED)
 # -----------------------------
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(
         Product, 
-        on_delete=models.SET_NULL, # Keeps order history if product is deleted
+        on_delete=models.SET_NULL, 
         null=True,
-        related_name='order_items' # This fixes the 'clash' error
+        related_name='order_items'
     )
     quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2) # Price at time of purchase
-
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # ⭐️ ⬇️ THIS WAS INDENTED WRONGLY. IT MUST BE INSIDE THE CLASS. ⬇️ ⭐️
+    vendor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        limit_choices_to={'role': 'VENDOR'}
+    )
+    
+    # ⭐️ ⬇️ THIS WAS ALSO INDENTED WRONGLY. ⬇️ ⭐️
     def __str__(self):
         return f"{self.quantity} of {self.product.name if self.product else 'Deleted Product'}"
-
-# order/models.py
-from django.db import models
-from django.conf import settings
-from product_app.models import Product 
-
-# --- (Your existing Cart, CartItem, and Order models remain here) ---
-
+        
 # -----------------------------
-# 5️⃣ OrderStatusHistory Model (NEW)
+# 5️⃣ OrderStatusHistory Model
 # -----------------------------
 class OrderStatusHistory(models.Model):
     order = models.ForeignKey(
@@ -96,14 +101,12 @@ class OrderStatusHistory(models.Model):
         on_delete=models.CASCADE, 
         related_name='history' # Critical for order.history.all() lookup
     )
-    # The user who changed the status (Admin or Vendor)
     changed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True
     )
-    # The status that the order changed TO
     status = models.CharField(max_length=10, choices=Order.STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
     
@@ -113,3 +116,32 @@ class OrderStatusHistory(models.Model):
 
     def __str__(self):
         return f"Order {self.order.id} status changed to {self.status}"
+    
+# -----------------------------
+# 6️⃣ Payout Model
+# -----------------------------
+class Payout(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('COMPLETED', 'Completed'),
+        ('REJECTED', 'Rejected'),
+        ('FAILED', 'Failed'),
+    ]
+
+    vendor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'VENDOR'}
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='PENDING'
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True) # Set this when you complete the payment
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"Payout for {self.vendor.username} - ₹{self.amount} ({self.status})"

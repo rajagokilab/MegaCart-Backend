@@ -17,3 +17,13 @@ class SupportMessageListCreateAPIView(generics.ListCreateAPIView):
     queryset = SupportMessage.objects.all().order_by('-created_at')
     serializer_class = SupportMessageSerializer
     permission_classes = [permissions.IsAdminUser]  # Only admins
+
+# ✅ ADDED: Admin API to retrieve/update (PATCH) a specific message
+class SupportMessageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Admin can retrieve, update (e.g., set is_resolved=True), or destroy a specific support message.
+    """
+    queryset = SupportMessage.objects.all()
+    serializer_class = SupportMessageSerializer
+    permission_classes = [permissions.IsAdminUser]
+    # NOTE: The lookup_field defaults to 'pk' (ID)

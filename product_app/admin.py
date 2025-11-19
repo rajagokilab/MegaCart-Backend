@@ -7,33 +7,54 @@ from django.contrib.auth.models import AnonymousUser
 # -----------------------------
 # 1️⃣ Category Admin (Guarded)
 # -----------------------------
+from django.contrib import admin
+from django import forms
+from django.utils.html import format_html
+from .models import Category
+
+# -----------------------------
+# Category Admin
+# -----------------------------
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
+    list_display = ('name', 'slug', 'image_tag')
     prepopulated_fields = {'slug': ('name',)}
     list_filter = ('name',)
-    
+    readonly_fields = ('image_tag',)
+
+    # Form for adding/editing categories
     class CategoryAddForm(forms.ModelForm):
         class Meta:
             model = Category
-            fields = ('name', 'slug',)
-            
+            fields = ('name', 'slug', 'image')  # allow uploading image
+
     def get_form(self, request, obj=None, **kwargs):
         kwargs['form'] = self.CategoryAddForm
         return super().get_form(request, obj, **kwargs)
 
-    # Permissions are set ONLY for the Admin role
+    # Show image preview in admin list
+    def image_tag(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" width="50" style="object-fit:cover;" />',
+                obj.image.url
+            )
+        return "-"
+    image_tag.short_description = 'Preview'
+
+    # Permissions (only ADMIN role can manage categories)
     def has_module_permission(self, request):
         return request.user.is_authenticated and request.user.role == 'ADMIN'
-    
+
     def has_add_permission(self, request):
         return request.user.is_authenticated and request.user.role == 'ADMIN'
-    
+
     def has_change_permission(self, request, obj=None):
         return request.user.is_authenticated and request.user.role == 'ADMIN'
-    
+
     def has_delete_permission(self, request, obj=None):
         return request.user.is_authenticated and request.user.role == 'ADMIN'
+
 
 
 # -----------------------------

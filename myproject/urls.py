@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/auth/', include('djoser.urls.jwt')),
       path('api/support/', include('support.urls')),
       path('api/users/', include('users.urls')),
+      
 
   # JWT login/logout
 ]

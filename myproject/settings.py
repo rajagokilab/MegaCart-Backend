@@ -94,10 +94,21 @@ ROOT_URLCONF = 'myproject.urls'
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # --- DATABASE ---
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',  # Use PostgreSQL for prod
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Use PostgreSQL for prod
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'vetricart_db',         
+        'USER': 'root',                  
+        'PASSWORD': '123456', 
+        'HOST': '127.0.0.1',             
+        'PORT': '3306',                  
     }
 }
 
@@ -190,7 +201,7 @@ if DEBUG:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
     EMAIL_HOST_PASSWORD = 'kkje supr djoz lqwk'
-    DEFAULT_FROM_EMAIL = f"MegaCart Support <{EMAIL_HOST_USER}>"
+    DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
 
 else:
     # ✅ Render production → SMTP disabled (no crash)

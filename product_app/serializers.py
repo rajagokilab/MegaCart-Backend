@@ -62,10 +62,17 @@ class ProductSerializer(serializers.ModelSerializer):
 # ----------------------------------------------------
 class CategorySerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'products']
+        fields = ['id', 'name', 'slug', 'products', 'image', 'image_url']  # ✅ include image_url
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
 
 # ----------------------------------------------------

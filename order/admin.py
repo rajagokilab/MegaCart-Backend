@@ -1,20 +1,15 @@
 from django.contrib import admin
-from .models import Order, OrderItem, Cart, CartItem
+from .models import Order, OrderItem, Cart, CartItem, OrderStatusHistory, Payout
 
 # --- 1. Inline for OrderItem ---
-# This allows the Admin to see all items when viewing a single Order object.
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    # Use raw_id_fields for ForeignKey lookups (more efficient for many products)
     raw_id_fields = ['product'] 
-    extra = 0 # Don't show extra empty forms by default
-    readonly_fields = ['price'] # Price should be fixed after order is placed
+    extra = 0
+    readonly_fields = ['price', 'vendor'] # Added vendor as readonly
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for the Order model.
-    """
     list_display = (
         'id', 
         'user', 
@@ -26,13 +21,12 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('user__username', 'razorpay_order_id', 'user__email')
     
-    # Fields shown when editing/viewing a single order
     fieldsets = (
         (None, {
             'fields': ('user', 'total_amount', 'status')
         }),
         ('Shipping Details', {
-            'fields': ('shipping_address',)
+            'fields': ('shipping_address', 'tracking_number')
         }),
         ('Payment Records', {
             'fields': ('razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature')
@@ -41,7 +35,6 @@ class OrderAdmin(admin.ModelAdmin):
     
     inlines = [OrderItemInline]
     
-    # These fields are set during the transaction and should not be editable by admin manually
     readonly_fields = (
         'user', 
         'total_amount',
@@ -53,7 +46,6 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
 # --- 2. Cart Management ---
-
 class CartItemInline(admin.TabularInline):
     model = CartItem
     raw_id_fields = ['product']
@@ -72,3 +64,19 @@ class CartItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'cart', 'product', 'quantity')
     list_filter = ('cart__is_active',)
     search_fields = ('product__name',)
+
+# --- 3. ADDED: Payout and History Admin ---
+
+@admin.register(OrderStatusHistory)
+class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    list_display = ('order', 'status', 'timestamp', 'changed_by')
+    list_filter = ('status', 'timestamp')
+    search_fields = ('order__id',)
+
+@admin.register(Payout)
+class PayoutAdmin(admin.ModelAdmin):
+    list_display = ('id', 'vendor', 'amount', 'status', 'requested_at', 'paid_at')
+    list_filter = ('status', 'requested_at')
+    search_fields = ('vendor__email', 'vendor__store_name')
+    list_editable = ('status',) # Allows quick updates from the list view
+    readonly_fields = ('vendor', 'amount', 'requested_at', 'paid_at', 'transaction_id')
