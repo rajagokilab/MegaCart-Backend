@@ -112,9 +112,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
 # ------------------
 # 2. PRODUCT VIEWSET
 # ------------------
+from rest_framework.parsers import MultiPartParser, FormParser # <--- 1. ADD THIS IMPORT
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = (MultiPartParser, FormParser)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['vendor', 'category']
     search_fields = ['name', 'category__name', 'vendor__store_name']
@@ -369,10 +371,115 @@ class AdminDashboardStatsView(views.APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework import viewsets, permissions
+from .models import Product
+from .serializers import ProductSerializer
+# Import your IsAdminUser permission if it's custom, or use standard:
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+
+# ---------------------------------------------------------
+# 1. ADMIN VIEWSET (Updates Status -> Notifies Vendor)
+# ---------------------------------------------------------
+class AdminProductStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        # ✅ FIX: Add 'is_published' so the frontend can toggle it
+        fields = ['status', 'is_published'] 
+
 class AdminProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
     serializer_class = ProductSerializer
     queryset = Product.objects.all().select_related('vendor', 'category')
+
+    def get_serializer_class(self):
+        # Use the specific serializer for updates
+        if self.action in ['update', 'partial_update']:
+            return AdminProductStatusSerializer
+        return super().get_serializer_class()
+
+    def perform_update(self, serializer):
+        # 1. Capture the previous status before saving
+        instance = serializer.instance
+        old_status = instance.status
+
+        # 2. Save the new data (Updates 'status' AND 'is_published')
+        updated_product = serializer.save()
+        new_status = updated_product.status
+
+        # 3. Check if STATUS changed (e.g., Pending -> Approved)
+        # We do this check so we don't send an email if we just toggled "is_published"
+        if old_status != new_status:
+            self.send_status_email(updated_product, new_status)
+
+    def send_status_email(self, product, new_status):
+        # ... (Your existing email logic remains exactly the same) ...
+        print(f"Attempting to send email for {product.name}...") 
+        try:
+            if not product.vendor or not product.vendor.email:
+                print("❌ No vendor email found. Skipping.")
+                return
+
+            vendor_email = product.vendor.email
+            subject = f"Product Status Update: {product.name}"
+            message = f"The status of your product '{product.name}' has changed to: {new_status}."
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [vendor_email],
+                fail_silently=False 
+            )
+            print(f"✅ Email sent to {vendor_email}")
+        except Exception as e:
+            print(f"❌ EMAIL FAILED (But status updated): {e}")
+
+# ---------------------------------------------------------
+# 2. VENDOR VIEWSET (Adds Product -> Notifies Admin)
+# ---------------------------------------------------------
+# Since you didn't have this, add it to the same file
+class VendorProductViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated] # Only logged in vendors
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        # Vendors only see their own products
+        return Product.objects.filter(vendor=self.request.user)
+
+    def perform_create(self, serializer):
+        # 1. Save product, assign logged-in user as vendor, set status to Pending
+        product = serializer.save(vendor=self.request.user, status='PENDING')
+        
+        # 2. Send Email to Admin
+        self.send_admin_notification(product)
+
+    def send_admin_notification(self, product):
+        """Helper function to send email to admin"""
+        try:
+            # You can set a specific admin email in settings.py or hardcode here
+            admin_email = getattr(settings, 'ADMIN_SUPPORT_EMAIL', settings.EMAIL_HOST_USER)
+            
+            subject = f"🚀 New Vendor Product: {product.name}"
+            message = (
+                f"A new product has been added by {self.request.user.username}.\n\n"
+                f"Product: {product.name}\n"
+                f"Price: {product.price}\n\n"
+                f"Please review it in the Admin Dashboard."
+            )
+
+            print(f"📧 Sending email to Admin: {admin_email}") # Console log
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [admin_email],
+                fail_silently=True
+            )
+        except Exception as e:
+            print(f"❌ Error sending email to admin: {e}")
     
 
 class AdminOrdersView(generics.ListAPIView):

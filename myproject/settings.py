@@ -191,20 +191,59 @@ RAZORPAY_KEY_SECRET = 'YnqU7CngK6MOvzwX6TCKTIit'
 # DEFAULT_FROM_EMAIL = 'MegaCart Support <rajagokilavivek@gmail.com>'
 
 
+# import os
+
+# if DEBUG:
+#     # ✅ Local development → SMTP works
+#     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#     EMAIL_HOST = 'smtp.gmail.com'
+#     EMAIL_PORT = 587
+#     EMAIL_USE_TLS = True
+#     EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
+#     EMAIL_HOST_PASSWORD = 'kkje supr djoz lqwk'
+#     DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
+
+# else:
+#     # ✅ Render production → SMTP disabled (no crash)
+#     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+
+
+# EMAIL_HOST_USER = os.environ.get('rajagokilavivek@gmail.com')
+# EMAIL_HOST_PASSWORD = os.environ.get('kkje supr djoz lqwk')
+# DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
+
+
+
 import os
 
-if DEBUG:
-    # ✅ Local development → SMTP works
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
+# ---------------------------------------------------
+# EMAIL CONFIGURATION
+# ---------------------------------------------------
+
+# Load credentials from environment variables
+EMAIL_HOST_USER = os.environ.get("rajagokilavivek@gmail.com")         # example: your Gmail address
+EMAIL_HOST_PASSWORD = os.environ.get("kkjesuprdjozlqwk")     # Gmail App Password (no spaces)
+
+DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
+
+# Production (DEBUG = False)
+if not DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.gmail.com"
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'rajagokilavivek@gmail.com'
-    EMAIL_HOST_PASSWORD = 'kkje supr djoz lqwk'
-    DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
 
+    if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+        print("⚠️ WARNING: EMAIL_USER or EMAIL_PASS missing! Emails will FAIL.")
 else:
-    # ✅ Render production → SMTP disabled (no crash)
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-
+    # Local development
+    if os.environ.get("USE_SMTP") == "True":
+        EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+        EMAIL_HOST = "smtp.gmail.com"
+        EMAIL_PORT = 587
+        EMAIL_USE_TLS = True
+    else:
+        # Default: print emails to console during development
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
