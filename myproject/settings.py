@@ -263,9 +263,9 @@ MEDIA_URL = '/media/'
 # This setting tells Django: "Don't save images to the hard drive. Send them to Cloudinary."
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# 3. Cloudinary Config
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('dykdiqcye'),
-    'API_KEY': os.environ.get('142259524472691'),
-    'API_SECRET': os.environ.get('YRgTXKDGtGnDfR4SbMPTxucU2fU'),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }

@@ -122,12 +122,10 @@ class CreateRazorpayOrder(APIView):
             # Ideally, if razorpay fails, we should probably delete the order manually
             # to "refund" the stock effectively (since stock was deducted above).
             
+            # Manual rollback of stock is complex here, but for simplicity we delete the order.
+            # In a real production app, consider putting the Razorpay call *before* the atomic block 
+            # or using a separate stock reservation system.
             new_order.delete()
-            
-            # Revert stock changes (manual loop because we are outside atomic block)
-            # NOTE: A better design puts razorpay call BEFORE atomic block or handles failure better.
-            # For simplicity in this fix, we just delete the order. 
-            # In a real production app, consider handling stock revert more carefully or move RP call.
             
             return Response({"error": f"Razorpay error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -242,7 +240,8 @@ class PaymentVerificationView(APIView):
                     logger.error(f"Failed to process payout/email for vendor {vendor.email}: {e}")
 
             try:
-                admin_email = "rajagokilavivek@gmail.com" # TODO: Move to settings
+                # You can use settings.ADMIN_EMAIL or hardcode if needed temporarily
+                admin_email = "rajagokilavivek@gmail.com" 
                 subject_admin = f"New Multi-Vendor Sale: Order #{order.id}"
                 message_admin = (
                     f"A new sale was made involving {len(vendors_map)} vendor(s).\n\n"
@@ -292,13 +291,9 @@ class PaymentVerificationView(APIView):
         except razorpay.errors.SignatureVerificationError:
             order.status = "Failed"
             order.save()
-            
-            # ⭐️ NOTE: If payment fails, you might want to revert stock here.
-            # However, since we deducted stock at "Order Creation" (before payment), 
-            # "Failed" orders still hold stock unless you run a cron job to clean them up
-            # or revert it here. 
-            # For now, we leave it deducted to reserve items for the user while they retry payment.
-            
+            # Note: Stock was already deducted. 
+            # In a perfect system, you'd revert stock here. 
+            # For now, we assume 'Failed' orders hold the stock (reservation logic).
             return Response({"error": "Payment verification failed"}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
@@ -535,8 +530,6 @@ class AdminPayoutUpdateView(APIView):
                     vendor = payout.vendor
                     vendor.available_for_payout = (vendor.available_for_payout or Decimal('0.00')) + payout.amount
                     vendor.save(update_fields=['available_for_payout'])
-                    
-                    # TODO: Send email to vendor: "Your payout was rejected."
             
             return Response(PayoutSerializer(payout).data, status=status.HTTP_200_OK)
         
@@ -573,15 +566,16 @@ class AdminExportOrdersExcelView(APIView):
             'payment_id': 'Payment ID',
             'shipping_address_flat': 'Shipping Address',
             'shipping_phone': 'Mobile Number',
-            'vendor_store_name': 'Vendor (Product)', # Original field
-            'vendor': 'Vendor (Item)', # New field
+            'vendor_store_name': 'Vendor (Product)',
+            'vendor': 'Vendor (Item)', 
             'product_name': 'Product Name',
             'product_category': 'Category',
             'quantity': 'Quantity',
             'price': 'Item Price (₹)',
         })
         
-        df['Order Date'] = pd.to_datetime(df['Order Date']).dt.strftime('%Y-%m-%d %I:%M %p')
+        if 'Order Date' in df.columns:
+            df['Order Date'] = pd.to_datetime(df['Order Date']).dt.strftime('%Y-%m-%d %I:%M %p')
         
         final_columns = [
             'Order ID', 'Order Date', 'Order Status', 
