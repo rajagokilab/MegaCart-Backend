@@ -216,38 +216,32 @@ RAZORPAY_KEY_SECRET = 'YnqU7CngK6MOvzwX6TCKTIit'
 # EMAIL_HOST_PASSWORD = os.environ.get('kkje supr djoz lqwk')
 # DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
 
-DEFAULT_FROM_EMAIL = "rajagokilavivek@gmail.com" 
-SERVER_EMAIL = "rajagokilavivek@gmail.com"
-
-
 import os
 
-# ---------------------------------------------------
-# EMAIL CONFIGURATION
-# ---------------------------------------------------
+# 1. Default Sender
+# ✅ CORRECT
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', "VetriCart Support <rajagokilavivek@gmail.com>")
+SERVER_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', "VetriCart Support <rajagokilavivek@gmail.com>")
 
-# Load credentials from environment variables
-EMAIL_HOST_USER = os.environ.get("rajagokilavivek@gmail.com")         # example: your Gmail address
-EMAIL_HOST_PASSWORD = os.environ.get("kkjesuprdjozlqwk")     # Gmail App Password (no spaces)
-
-DEFAULT_FROM_EMAIL = f"VetriCart Support <{EMAIL_HOST_USER}>"
-
-# Production (DEBUG = False)
+# 2. Switch Backends
 if not DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = "smtp.gmail.com"
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
+    # --- PRODUCTION (RENDER) ---
+    INSTALLED_APPS += ['anymail']
+    EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+    
+    ANYMAIL = {
+        # ✅ FIX: Look for the VARIABLE NAME, not the key itself
+        "BREVO_API_KEY": os.environ.get("BREVO_API_KEY"),
+    }
 
-    if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-        print("⚠️ WARNING: EMAIL_USER or EMAIL_PASS missing! Emails will FAIL.")
 else:
-    # Local development
+    # --- LOCAL DEVELOPMENT ---
     if os.environ.get("USE_SMTP") == "True":
         EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
         EMAIL_HOST = "smtp.gmail.com"
         EMAIL_PORT = 587
         EMAIL_USE_TLS = True
+        EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+        EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
     else:
-        # Default: print emails to console during development
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
