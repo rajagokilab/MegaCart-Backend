@@ -31,6 +31,7 @@ class ProductSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.store_name', read_only=True)
 
     image_url = serializers.SerializerMethodField()
+    # image_url = serializers.CharField(read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
 
@@ -44,13 +45,28 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['vendor', 'vendor_name', 'status']
 
+    # def get_image_url(self, obj):
+    #     request = self.context.get("request", None)
+    #     if obj.image:
+    #         if request:
+    #             return request.build_absolute_uri(obj.image.url)
+    #         return obj.image.url
+    #     return None
+
     def get_image_url(self, obj):
-        request = self.context.get("request", None)
-        if obj.image:
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+        """
+        Returns a fully qualified URL for the product image.
+        - If the field is already a URL (Cloudinary), return it directly.
+        - If it’s a local file, prepend the backend media URL.
+        """
+        if obj.image_url:  # if field already has a Cloudinary URL
+            if obj.image_url.startswith("http"):
+                return obj.image_url
+        if obj.image and hasattr(obj.image, 'url'):
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image.url)
+        return ""  # fallback if no image
+
 
     def get_average_rating(self, obj):
         avg = obj.reviews.aggregate(models.Avg('rating'))['rating__avg']
@@ -63,16 +79,27 @@ class ProductSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
     image_url = serializers.SerializerMethodField()
+    # image_url = serializers.CharField(read_only=True)
+    
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'products', 'image', 'image_url']  # ✅ include image_url
 
+    # def get_image_url(self, obj):
+    #     request = self.context.get('request')
+    #     if obj.image and hasattr(obj.image, 'url'):
+    #         return request.build_absolute_uri(obj.image.url)
+    #     return None
+
+
     def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image and hasattr(obj.image, 'url'):
-            return request.build_absolute_uri(obj.image.url)
+        if obj.image:  # use the actual ImageField
+            if obj.image.url.startswith('http'):
+                return obj.image.url  # already Cloudinary URL
+            return self.context['request'].build_absolute_uri(obj.image.url)
         return None
+
 
 
 # ----------------------------------------------------

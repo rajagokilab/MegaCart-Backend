@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 # -----------------------------
 # 1️⃣ Category Model
 # -----------------------------
@@ -31,6 +32,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='product_images/', null=True, blank=True)
+    image_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # 🛑 ADDED FIELDS FOR VENDOR APPROVAL WORKFLOW

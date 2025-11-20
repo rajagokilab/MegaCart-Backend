@@ -54,15 +54,31 @@ class CartSerializer(serializers.ModelSerializer):
 class ProductLiteSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
 
+
     class Meta:
         model = Product
         fields = ['name', 'image_url']
 
+    # def get_image_url(self, obj):
+    #     request = self.context.get('request')
+    #     if obj.image:
+    #         return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+    #     return None
+
     def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
-        return None
+        """
+        Returns a fully qualified URL for the product image.
+        - If the field is already a URL (Cloudinary), return it directly.
+        - If it’s a local file, prepend the backend media URL.
+        """
+        if obj.image_url:  # if field already has a Cloudinary URL
+            if obj.image_url.startswith("http"):
+                return obj.image_url
+        if obj.image and hasattr(obj.image, 'url'):
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image.url)
+        return ""  # fallback if no image
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductLiteSerializer(read_only=True)

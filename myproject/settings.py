@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # --- INSTALLED APPS ---
@@ -20,7 +20,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
 
     # Third-party apps
     'rest_framework',
@@ -29,7 +31,7 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'whitenoise.runserver_nostatic',
-    'cloudinary_storage',
+   
     
 
     # Local apps
@@ -37,7 +39,6 @@ INSTALLED_APPS = [
     'users',
     'order',
     'support',
-    'cloudinary',
     
 ]
 
@@ -250,22 +251,39 @@ else:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
+
+
 import os
 
-# 1. Static Files (CSS/JS) - Keep using WhiteNoise
+# --- Static Files (CSS, JS) - Managed by WhiteNoise ---
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# 2. Media Files (Product Images) - Use Cloudinary
-MEDIA_URL = '/media/'
+# --- Media Files (User Uploads) - Managed by Cloudinary ---
+MEDIA_URL = '/media/'  # This will be overridden by Cloudinary's URL in practice
 
-# This setting tells Django: "Don't save images to the hard drive. Send them to Cloudinary."
+# ✅ Critical: Tell Django to use Cloudinary for all media uploads
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-
+# ✅ Cloudinary Configuration
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
+
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env
+load_dotenv()
+
+# Cloudinary configuration
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
