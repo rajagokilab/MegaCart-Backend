@@ -29,12 +29,15 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'whitenoise.runserver_nostatic',
+    'cloudinary_storage',
+    
 
     # Local apps
     'product_app',
     'users',
     'order',
     'support',
+    'cloudinary',
     
 ]
 
@@ -245,3 +248,24 @@ else:
         EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
     else:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+import os
+
+# 1. Static Files (CSS/JS) - Keep using WhiteNoise
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# 2. Media Files (Product Images) - Use Cloudinary
+MEDIA_URL = '/media/'
+
+# This setting tells Django: "Don't save images to the hard drive. Send them to Cloudinary."
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# 3. Cloudinary Config
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('dykdiqcye'),
+    'API_KEY': os.environ.get('142259524472691'),
+    'API_SECRET': os.environ.get('YRgTXKDGtGnDfR4SbMPTxucU2fU'),
+}
