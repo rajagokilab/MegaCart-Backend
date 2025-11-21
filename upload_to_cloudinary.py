@@ -1,32 +1,37 @@
 import os
 import django
+from django.core.files import File
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")  # adjust if your settings are elsewhere
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
 django.setup()
 
-import cloudinary.uploader
-from product_app.models import Product
+from product_app.models import Product, Category
 
-products = Product.objects.all()
+def migrate_model_images(model_class, type_name):
+    print(f"\n--- Processing {type_name} ---")
+    items = model_class.objects.all()
 
-for product in products:
-    if not product.image:
-        print("No image:", product.name)
-        continue
+    for item in items:
+        if not item.image:
+            print(f"Skipping {item.name} (No image)")
+            continue
 
-    if str(product.image).startswith("http"):
-        print("Already a URL, skipping:", product.name)
-        continue
+        if str(item.image).startswith("http"):
+            print(f"Skipping {item.name} (Already on Cloudinary)")
+            continue
 
-    local_path = os.path.join(os.getcwd(), "media", str(product.image))
+        filename = os.path.basename(str(item.image))
+        local_path = os.path.join(os.getcwd(), "media", str(item.image))
 
-    if os.path.exists(local_path):
-        print("Uploading:", product.name)
-        result = cloudinary.uploader.upload(local_path, folder="product_images")
-        product.image_url = result["secure_url"]
-        product.save()
-        print("Uploaded:", product.image_url)
-    else:
-        print("Local file missing:", local_path)
+        if os.path.exists(local_path):
+            print(f"Uploading: {item.name}...")
+            with open(local_path, 'rb') as f:
+                item.image.save(filename, File(f), save=True)
+            print(f"✅ Success! New URL: {item.image.url}")
+        else:
+            print(f"❌ File missing on laptop: {local_path}")
 
-print("Done!")
+if __name__ == "__main__":
+    migrate_model_images(Product, "Products")
+    migrate_model_images(Category, "Categories")
+    print("\n✅ Migration Complete!")

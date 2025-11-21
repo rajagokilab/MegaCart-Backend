@@ -66,18 +66,14 @@ class ProductLiteSerializer(serializers.ModelSerializer):
     #     return None
 
     def get_image_url(self, obj):
-        """
-        Returns a fully qualified URL for the product image.
-        - If the field is already a URL (Cloudinary), return it directly.
-        - If it’s a local file, prepend the backend media URL.
-        """
-        if obj.image_url:  # if field already has a Cloudinary URL
-            if obj.image_url.startswith("http"):
-                return obj.image_url
-        if obj.image and hasattr(obj.image, 'url'):
+        if obj.cloudinary_url:
+            return obj.cloudinary_url  # ALWAYS use Cloudinary
+
+        if obj.image:
             request = self.context.get('request')
             return request.build_absolute_uri(obj.image.url)
-        return ""  # fallback if no image
+
+        return None
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

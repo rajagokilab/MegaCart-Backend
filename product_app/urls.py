@@ -2,6 +2,8 @@
 from django.urls import path, include
 from rest_framework_nested.routers import DefaultRouter
 from rest_framework_nested import routers
+from django.conf import settings
+from django.conf.urls.static import static
 
 # --- 1. IMPORT ALL THE VIEWS YOU NEED ---
 from .views import (
@@ -73,3 +75,5 @@ urlpatterns = [
     # --- Admin Dashboard Routes ---
     path('admin/dashboard/', AdminDashboardStatsView.as_view(), name='admin-dashboard-stats'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

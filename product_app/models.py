@@ -6,14 +6,18 @@ from django.conf import settings
 # 1️⃣ Category Model
 # -----------------------------
 # models.py
-from django.db import models
+from cloudinary.models import CloudinaryField
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
-    image = models.ImageField(upload_to='category_images/', blank=True, null=True) 
+    # image = models.ImageField(upload_to='category_images/', blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True)
+    cloudinary_url = models.URLField(blank=True, null=True)   # ✅ ADD THIS
+
     def __str__(self):
         return self.name
+
 
 
 
@@ -32,7 +36,9 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='product_images/', null=True, blank=True)
-    image_url = models.URLField(blank=True, null=True)
+    # image_url = models.URLField(blank=True, null=True)
+    cloudinary_url = models.URLField(blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     
     # 🛑 ADDED FIELDS FOR VENDOR APPROVAL WORKFLOW
@@ -56,7 +62,7 @@ class Product(models.Model):
         # We assume the vendor object has a store_name field for display
         return f"{self.name} ({self.vendor.store_name})"
 
-
+    
 # -----------------------------
 # 3️⃣ Review Model
 # -----------------------------

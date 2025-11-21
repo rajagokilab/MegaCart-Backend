@@ -54,18 +54,12 @@ class ProductSerializer(serializers.ModelSerializer):
     #     return None
 
     def get_image_url(self, obj):
-        """
-        Returns a fully qualified URL for the product image.
-        - If the field is already a URL (Cloudinary), return it directly.
-        - If it’s a local file, prepend the backend media URL.
-        """
-        if obj.image_url:  # if field already has a Cloudinary URL
-            if obj.image_url.startswith("http"):
-                return obj.image_url
-        if obj.image and hasattr(obj.image, 'url'):
-            request = self.context.get('request')
+        if obj.cloudinary_url:
+            return obj.cloudinary_url
+        if obj.image:
+            request = self.context.get("request")
             return request.build_absolute_uri(obj.image.url)
-        return ""  # fallback if no image
+        return None
 
 
     def get_average_rating(self, obj):
@@ -81,6 +75,7 @@ class CategorySerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     # image_url = serializers.CharField(read_only=True)
     
+    
 
     class Meta:
         model = Category
@@ -94,11 +89,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
     def get_image_url(self, obj):
-        if obj.image:  # use the actual ImageField
-            if obj.image.url.startswith('http'):
-                return obj.image.url  # already Cloudinary URL
-            return self.context['request'].build_absolute_uri(obj.image.url)
-        return None
+            if obj.image:
+                return obj.image.url  # CloudinaryField provides full URL
+            return None
+
 
 
 

@@ -254,36 +254,29 @@ else:
 
 
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
-# --- Static Files (CSS, JS) - Managed by WhiteNoise ---
+# --- Base Directory ---
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# --- Load environment variables ---
+load_dotenv()  # Loads variables from .env file
+
+# --- Static Files (CSS, JS) ---
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --- Media Files (User Uploads) - Managed by Cloudinary ---
-MEDIA_URL = '/media/'  # This will be overridden by Cloudinary's URL in practice
+# --- Media Files (User Uploads) ---
+# This will be overridden by Cloudinary's storage backend
+MEDIA_URL = '/media/'
 
-# ✅ Critical: Tell Django to use Cloudinary for all media uploads
+# --- Cloudinary Storage Backend ---
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# ✅ Cloudinary Configuration
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-}
-
-from dotenv import load_dotenv
-import os
-
-# Load environment variables from .env
-load_dotenv()
-
-# Cloudinary configuration
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

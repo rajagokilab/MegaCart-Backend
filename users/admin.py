@@ -38,3 +38,5 @@ class CustomUserAdmin(UserAdmin):
     def has_delete_permission(self, request, obj=None):
         # Only allow authenticated users with the specific ADMIN role
         return request.user.is_authenticated and request.user.role == 'ADMIN'
+    
+    

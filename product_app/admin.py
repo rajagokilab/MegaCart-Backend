@@ -33,12 +33,18 @@ class CategoryAdmin(admin.ModelAdmin):
         return super().get_form(request, obj, **kwargs)
 
     # Show image preview in admin list
+    # def image_tag(self, obj):
+    #     if obj.image:
+    #         return format_html(
+    #             '<img src="{}" width="50" style="object-fit:cover;" />',
+    #             obj.image.url
+    #         )
+    #     return "-"
+    # image_tag.short_description = 'Preview'
     def image_tag(self, obj):
-        if obj.image:
-            return format_html(
-                '<img src="{}" width="50" style="object-fit:cover;" />',
-                obj.image.url
-            )
+        url = obj.cloudinary_url or (obj.image.url if obj.image else None)
+        if url:
+            return format_html('<img src="{}" width="50" style="object-fit:cover;" />', url)
         return "-"
     image_tag.short_description = 'Preview'
 
@@ -78,15 +84,25 @@ class ProductAdmin(admin.ModelAdmin):
     
     readonly_fields = ('vendor', 'image_tag')  # <-- image_tag is read-only
 
+    # def vendor_name(self, obj):
+    #     return obj.vendor.store_name if obj.vendor else '-'
+    # vendor_name.short_description = 'Vendor'
+
+    # def image_tag(self, obj):
+    #     if obj.image:
+    #         return format_html('<img src="{}" width="50" style="object-fit:cover;" />', obj.image.url)
+    #     return "-"
+    # image_tag.short_description = 'Preview'
+    def image_tag(self, obj):
+        url = obj.cloudinary_url or (obj.image.url if obj.image else None)
+        if url:
+            return format_html('<img src="{}" width="50" style="object-fit:cover;" />', url)
+        return "-"
+    image_tag.short_description = 'Preview'
+
     def vendor_name(self, obj):
         return obj.vendor.store_name if obj.vendor else '-'
     vendor_name.short_description = 'Vendor'
-
-    def image_tag(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" style="object-fit:cover;" />', obj.image.url)
-        return "-"
-    image_tag.short_description = 'Preview'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "vendor":

@@ -151,8 +151,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not (user.role == 'VENDOR' or user.is_superuser):
             raise serializers.ValidationError({"detail": "Only vendors can create products."})
-        # New products start as PENDING and NOT PUBLISHED
-        serializer.save(vendor=user, status='PENDING', is_published=False)
+    
+        product = serializer.save(vendor=user, status='PENDING', is_published=False)
+    
+    # After save, store the Cloudinary URL
+        if product.image:
+            product.cloudinary_url = product.image.url
+            product.save(update_fields=['cloudinary_url'])
+
         
     @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
     def approve(self, request, pk=None):
@@ -412,6 +418,11 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         # We do this check so we don't send an email if we just toggled "is_published"
         if old_status != new_status:
             self.send_status_email(updated_product, new_status)
+        
+        if updated_product.image:
+            updated_product.cloudinary_url = updated_product.image.url
+            updated_product.save(update_fields=['cloudinary_url'])
+
 
     def send_status_email(self, product, new_status):
         # ... (Your existing email logic remains exactly the same) ...
