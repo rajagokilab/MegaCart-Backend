@@ -34,16 +34,16 @@ class ProductSerializer(serializers.ModelSerializer):
     # image_url = serializers.CharField(read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
-
+    cloudinary_url = serializers.CharField(read_only=True) # or use SerializerMethodField here
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'category', 'category_name', 
             'vendor', 'vendor_name', 
-            'price', 'stock', 'image', 'image_url', 'is_published',
+            'price', 'stock', 'image', 'image_url', 'is_published','cloudinary_url',
             'reviews', 'average_rating', 'status','created_at'
         ]
-        read_only_fields = ['vendor', 'vendor_name', 'status']
+        read_only_fields = ['vendor', 'vendor_name', 'status','created_at', 'updated_at']
 
     # def get_image_url(self, obj):
     #     request = self.context.get("request", None)
@@ -54,11 +54,8 @@ class ProductSerializer(serializers.ModelSerializer):
     #     return None
 
     def get_image_url(self, obj):
-        if obj.cloudinary_url:
-            return obj.cloudinary_url
         if obj.image:
-            request = self.context.get("request")
-            return request.build_absolute_uri(obj.image.url)
+            return obj.image.url 
         return None
 
 
@@ -70,28 +67,27 @@ class ProductSerializer(serializers.ModelSerializer):
 # ----------------------------------------------------
 # 3. CATEGORY SERIALIZER (Correct)
 # ----------------------------------------------------
+# product_app/serializers.py
+
+# ----------------------------------------------------
+# 3. CATEGORY SERIALIZER (FIXED)
+# ----------------------------------------------------
 class CategorySerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
-    image_url = serializers.SerializerMethodField()
-    # image_url = serializers.CharField(read_only=True)
     
-    
+    # 1. Rename the field to point to the new method name
+    image_url = serializers.SerializerMethodField(method_name='get_category_image_url')
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'products', 'image', 'image_url']  # ✅ include image_url
+        fields = ['id', 'name', 'slug', 'products', 'image', 'image_url'] 
 
-    # def get_image_url(self, obj):
-    #     request = self.context.get('request')
-    #     if obj.image and hasattr(obj.image, 'url'):
-    #         return request.build_absolute_uri(obj.image.url)
-    #     return None
-
-
-    def get_image_url(self, obj):
-            if obj.image:
-                return obj.image.url  # CloudinaryField provides full URL
-            return None
+    # 2. Define the renamed method *INSIDE* the class block
+    def get_category_image_url(self, obj):
+        if obj.image:
+            # CloudinaryField returns the absolute URL via .url
+            return obj.image.url 
+        return None
 
 
 

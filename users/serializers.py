@@ -37,7 +37,7 @@ class LoginSerializer(serializers.Serializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'role', 'store_name', 'is_active', 'is_staff')
+        fields = ('id', 'username', 'email', 'role', 'store_name', 'is_active', 'is_staff','date_joined')
 
 class StorefrontUpdateSerializer(serializers.ModelSerializer):
     class Meta:

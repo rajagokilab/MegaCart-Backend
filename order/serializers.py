@@ -66,13 +66,9 @@ class ProductLiteSerializer(serializers.ModelSerializer):
     #     return None
 
     def get_image_url(self, obj):
-        if obj.cloudinary_url:
-            return obj.cloudinary_url  # ALWAYS use Cloudinary
-
+        # ✅ FIX: Access the actual image field and retrieve the remote URL property
         if obj.image:
-            request = self.context.get('request')
-            return request.build_absolute_uri(obj.image.url)
-
+            return obj.image.url 
         return None
 
 
@@ -96,6 +92,7 @@ class OrderSerializer(serializers.ModelSerializer):
     # ⭐️ ADDED: To show vendor/product names in Admin Order Dashboard
     vendor_name = serializers.SerializerMethodField()
     product_names = serializers.SerializerMethodField()
+    customer_name = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
         model = Order
@@ -103,7 +100,8 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 
             'razorpay_order_id', 
             'created_at', 
-            'status', 
+            'status',
+            'customer_name', 
             'total_amount', 
             'items', 
             'history',

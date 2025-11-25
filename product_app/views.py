@@ -91,9 +91,18 @@ def get_current_cart(request):
 # ------------------
 # 1. CATEGORY VIEWSET
 # ------------------
+# product_app/views.py (or where your ViewSets are defined)
+
+from rest_framework import viewsets
+from rest_framework.permissions import AllowAny, IsAdminUser 
+from product_app.models import Category
+from product_app.serializers import CategorySerializer
+
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+    # Use the serializer
+    serializer_class = CategorySerializer 
+    
+    # Define permissions: Anyone can read, Only Admin can write
     permission_classes_by_action = {
         'list': [AllowAny],
         'retrieve': [AllowAny],
@@ -102,12 +111,24 @@ class CategoryViewSet(viewsets.ModelViewSet):
         'partial_update': [IsAdminUser],
         'destroy': [IsAdminUser],
     }
+    
+    # Default permission fallback
+    permission_classes = [IsAdminUser] 
 
     def get_permissions(self):
         try:
             return [permission() for permission in self.permission_classes_by_action[self.action]]
         except KeyError:
             return [permission() for permission in self.permission_classes]
+
+    # ✅ CRITICAL: FILTER LOGIC
+    def get_queryset(self):
+        # 1. If the user is an ADMIN, show everything (so they can edit hidden ones)
+        if self.request.user.is_authenticated and self.request.user.role == 'ADMIN':
+            return Category.objects.all()
+        
+        # 2. Everyone else (Frontend/Public) sees ONLY active categories
+        return Category.objects.filter(is_active=True)
 
 # ------------------
 # 2. PRODUCT VIEWSET
@@ -148,16 +169,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def perform_create(self, serializer):
-        user = self.request.user
-        if not (user.role == 'VENDOR' or user.is_superuser):
-            raise serializers.ValidationError({"detail": "Only vendors can create products."})
-    
-        product = serializer.save(vendor=user, status='PENDING', is_published=False)
-    
-    # After save, store the Cloudinary URL
-        if product.image:
-            product.cloudinary_url = product.image.url
-            product.save(update_fields=['cloudinary_url'])
+        # ⚠️ This step may be necessary if request data contains extra fields
+        validated_data = serializer.validated_data
+        
+        # Manually remove non-model fields if they are somehow getting past validation
+        if 'cloudinary_url' in validated_data:
+            del validated_data['cloudinary_url']
+            
+        serializer.save(vendor=self.request.user)
 
         
     @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
@@ -419,10 +438,10 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         if old_status != new_status:
             self.send_status_email(updated_product, new_status)
         
-        if updated_product.image:
-            updated_product.cloudinary_url = updated_product.image.url
-            updated_product.save(update_fields=['cloudinary_url'])
-
+        # if updated_product.image:
+        #     updated_product.cloudinary_url = updated_product.image.url
+        #     updated_product.save(update_fields=['cloudinary_url'])
+        pass
 
     def send_status_email(self, product, new_status):
         # ... (Your existing email logic remains exactly the same) ...

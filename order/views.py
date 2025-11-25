@@ -503,6 +503,24 @@ class AdminPayoutListView(generics.ListAPIView):
         return Payout.objects.all().order_by('-requested_at')
 
 
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from django.utils import timezone
+from decimal import Decimal
+import logging
+
+# Ensure you have your imports for Payout and PayoutSerializer here
+# from .models import Payout
+# from .serializers import PayoutSerializer
+
+logger = logging.getLogger(__name__)
+
 class AdminPayoutUpdateView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -523,7 +541,34 @@ class AdminPayoutUpdateView(APIView):
                 
                 if new_status == 'COMPLETED':
                     payout.paid_at = timezone.now()
-                
+                    
+                    # --- EMAIL LOGIC STARTS HERE ---
+                    try:
+                        subject = f"Payout Processed: ₹{payout.amount}"
+                        message = (
+                            f"Dear {payout.vendor.store_name},\n\n"
+                            f"Great news! Your payout request for ₹{payout.amount} has been processed successfully.\n"
+                            f"The funds should reflect in your account shortly based on your bank's processing time.\n\n"
+                            f"Payout ID: #{payout.id}\n"
+                            f"Processed Date: {payout.paid_at.strftime('%Y-%m-%d')}\n\n"
+                            f"Thank you for partnering with us.\n\n"
+                            f"Regards,\nAdmin Team"
+                        )
+                        
+                        send_mail(
+                            subject,
+                            message,
+                            settings.EMAIL_HOST_USER, # Or your specific sender email
+                            [payout.vendor.email],    # Recipient email
+                            fail_silently=False,
+                        )
+                        logger.info(f"Payout email sent to {payout.vendor.email}")
+                    except Exception as email_error:
+                        # Log the error but DO NOT rollback the transaction. 
+                        # The payout should still be marked as complete even if the email fails.
+                        logger.error(f"Failed to send payout email to vendor {payout.vendor.id}: {email_error}")
+                    # --- EMAIL LOGIC ENDS HERE ---
+
                 payout.save()
                 
                 if new_status == 'REJECTED':

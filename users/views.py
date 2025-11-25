@@ -294,3 +294,21 @@ class AdminDashboardView(APIView):
                 # ... other charts ...
             }
         })
+    # views.py in your Django Backend
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_all_customers(request):
+    # Filter for users who are NOT vendors and NOT admins (or however you define 'customer')
+    customers = User.objects.filter(role='CUSTOMER') 
+    # OR if you don't use a role field yet:
+    # customers = User.objects.filter(is_staff=False, is_superuser=False)
+    
+    serializer = CustomUserSerializer(customers, many=True)
+    return Response(serializer.data)

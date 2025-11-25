@@ -1,0 +1,34 @@
+[33m288e2b1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m changed New version UI/UX
+[33md0eb5d8[m changed New version UI
+[33me0fa406[m[33m ([m[1;31morigin/main[m[33m)[m after long struggle fixed the cloudinary
+[33m7240fd1[m image cloudinary problem fixed
+[33m1d2ddd8[m image cloudinary problem fixed
+[33m6843949[m image cloudinary problem fixed
+[33md051153[m CLOUDINARY CORRECTED
+[33m5d27a7e[m Debug False
+[33m209ed1f[m cloudinary
+[33mb8f7cdd[m navbar chnage
+[33m4768871[m mail
+[33m6de3287[m db migrate
+[33m6187f32[m db changed
+[33meeea876[m after explaination images where uploaded
+[33m452c454[m final vetrcart
+[33m8ec5816[m payment and admin dashboard
+[33m73519b8[m admin
+[33mbbd3c21[m true
+[33mbbfd9e6[m settings email,orderstatusupdateview,paymentverficatioview
+[33m60f12c4[m payment changed
+[33m8a40d86[m settingsemail again
+[33m19acf72[m settingsemail
+[33m571ac91[m orderviews paymentverifictaion changed
+[33m684130a[m buynow cart issue
+[33m655245b[m verify/ error fixed
+[33m9b51207[m static files image
+[33m27e5d1c[m static files
+[33mbb1206b[m checkout page
+[33mfb59b9a[m CORS ALLOWE SETTINGS.PY
+[33mcdb5f18[m vercel
+[33m171cf24[m requirementss
+[33ma5a8c46[m Add django-filter
+[33m3f8baa4[m requirements
+[33m28b14bd[m first commit

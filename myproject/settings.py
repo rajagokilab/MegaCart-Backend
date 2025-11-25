@@ -3,9 +3,13 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 # --- BASE DIR ---
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
@@ -166,12 +170,27 @@ REST_FRAMEWORK = {
 # --- SIMPLE JWT ---
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=360),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# --- DJOSER ---
+
+# DJOSER = {
+#     'USER_CREATE_PASSWORD_RETYPE': True,
+#     'LOGIN_FIELD': 'email',
+#     'USER_ID_FIELD': 'id',
+#     'SERIALIZERS': {
+#         'user_create': 'users.serializers.CustomUserCreateSerializer',
+#         'user': 'users.serializers.CustomUserSerializer',
+#         'current_user': 'users.serializers.CustomUserSerializer',
+#         'token_create': 'djoser.serializers.TokenCreateSerializer',
+#     }
+# }
+
+
+
 DJOSER = {
+    # --- YOUR EXISTING SETTINGS ---
     'USER_CREATE_PASSWORD_RETYPE': True,
     'LOGIN_FIELD': 'email',
     'USER_ID_FIELD': 'id',
@@ -180,12 +199,37 @@ DJOSER = {
         'user': 'users.serializers.CustomUserSerializer',
         'current_user': 'users.serializers.CustomUserSerializer',
         'token_create': 'djoser.serializers.TokenCreateSerializer',
+    },
+
+    # --- NEW PASSWORD RESET LOGIC ---
+    
+    # 1. The URL structure that will be sent in the email.
+    # This must match the Route you added in React (Step 2 of previous answer).
+    'PASSWORD_RESET_CONFIRM_URL': 'reset-password/{uid}/{token}',
+
+    # 2. Point to the Custom Email script.
+    # This forces the email to use 'localhost:5173' instead of 'localhost:8000'
+    'EMAIL': {
+        'password_reset': 'users.email.CustomPasswordResetEmail',
+    },
+    
+    # 3. Permissions (Ensure anyone can request a reset without logging in)
+    'PERMISSIONS': {
+        'password_reset': ['rest_framework.permissions.AllowAny'],
+        'password_reset_confirm': ['rest_framework.permissions.AllowAny'],
+        'user': ['djoser.permissions.CurrentUserOrAdmin'],
     }
 }
 
+
+
+
+
+
+
 # --- RAZORPAY ---
-RAZORPAY_KEY_ID = 'rzp_test_Rc49M6OPR7fOLP'
-RAZORPAY_KEY_SECRET = 'YnqU7CngK6MOvzwX6TCKTIit'
+RAZORPAY_KEY_ID = 'rzp_test_RjZJ90FopiN2Lo'
+RAZORPAY_KEY_SECRET = '0HOp3DQ9BnbSzE5DFHvixvec'
 
 # # --- EMAIL CONFIGURATION ---
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -261,7 +305,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Load environment variables ---
-load_dotenv()  # Loads variables from .env file
+ # Loads variables from .env file
 
 # --- Static Files (CSS, JS) ---
 STATIC_URL = '/static/'
