@@ -13,18 +13,18 @@
 #         return context
 
 from djoser import email
-from django.conf import settings  # <--- 1. Import settings
+from django.conf import settings
 
 class CustomPasswordResetEmail(email.PasswordResetEmail):
     def get_context_data(self):
-        # 2. Grab the default data
         context = super().get_context_data()
 
-        # 3. OVERRIDE: Use the dynamic setting we created in Step 1
-        context['domain'] = settings.FRONTEND_DOMAIN 
+        # This reads the variable you just set in the dashboard
+        # If it's missing, it defaults to localhost (which is why you had the error)
+        context['domain'] = getattr(settings, 'FRONTEND_DOMAIN', 'localhost:5173')
         context['site_name'] = 'VetriCart'
         
-        # Optional: Ensure production links use 'https'
+        # Ensure the link is HTTPS in production
         if not settings.DEBUG:
             context['protocol'] = 'https'
 
