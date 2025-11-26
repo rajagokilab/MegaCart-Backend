@@ -1,13 +1,31 @@
+# from djoser import email
+
+# class CustomPasswordResetEmail(email.PasswordResetEmail):
+#     def get_context_data(self):
+#         # 1. Grab the default data (user, uid, token)
+#         context = super().get_context_data()
+
+#         # 2. OVERRIDE: Force the domain to your React Frontend Port
+#         # If you deploy to production later, change this to your real domain (e.g., vetricart.com)
+#         context['domain'] = 'localhost:5173'
+#         context['site_name'] = 'VetriCart'
+        
+#         return context
+
 from djoser import email
+from django.conf import settings  # <--- 1. Import settings
 
 class CustomPasswordResetEmail(email.PasswordResetEmail):
     def get_context_data(self):
-        # 1. Grab the default data (user, uid, token)
+        # 2. Grab the default data
         context = super().get_context_data()
 
-        # 2. OVERRIDE: Force the domain to your React Frontend Port
-        # If you deploy to production later, change this to your real domain (e.g., vetricart.com)
-        context['domain'] = 'localhost:5173'
+        # 3. OVERRIDE: Use the dynamic setting we created in Step 1
+        context['domain'] = settings.FRONTEND_DOMAIN 
         context['site_name'] = 'VetriCart'
         
+        # Optional: Ensure production links use 'https'
+        if not settings.DEBUG:
+            context['protocol'] = 'https'
+
         return context

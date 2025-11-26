@@ -187,7 +187,7 @@ SIMPLE_JWT = {
 #     }
 # }
 
-
+FRONTEND_DOMAIN = os.environ.get('FRONTEND_DOMAIN', 'localhost:5173')
 
 DJOSER = {
     # --- YOUR EXISTING SETTINGS ---
