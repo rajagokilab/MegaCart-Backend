@@ -187,8 +187,16 @@ SIMPLE_JWT = {
 #     }
 # }
 
-FRONTEND_DOMAIN = os.environ.get('FRONTEND_DOMAIN', 'localhost:5173')
-
+if DEBUG:
+    # Local Development
+    FRONTEND_DOMAIN = 'localhost:5173'
+    PROTOCOL = 'http'
+else:
+    # Production (Render/Vercel)
+    # We hardcode your real domain here so it CANNOT fail
+    FRONTEND_DOMAIN = 'mega-cart-frontend.vercel.app'
+    PROTOCOL = 'https'
+    
 DJOSER = {
     # --- YOUR EXISTING SETTINGS ---
     'USER_CREATE_PASSWORD_RETYPE': True,
