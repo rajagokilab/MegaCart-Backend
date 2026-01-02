@@ -1,29 +1,22 @@
 from django.db import models
 from django.conf import settings
-
-
-# -----------------------------
-# 1️⃣ Category Model
-# -----------------------------
-# models.py
+from decimal import Decimal # Required for price calculation
 from cloudinary.models import CloudinaryField
 
+# -----------------------------
+# 1. Category Model
+# -----------------------------
 class Category(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
-    # image = models.ImageField(upload_to='category_images/', blank=True, null=True)
     image = CloudinaryField('image', blank=True, null=True)
     is_active = models.BooleanField(default=True, help_text="Uncheck to hide this category")
-    # cloudinary_url = models.URLField(blank=True, null=True)  
 
     def __str__(self):
         return self.name
 
-
-
-
 # -----------------------------
-# 2️⃣ Product Model
+# 2. Product Model
 # -----------------------------
 class Product(models.Model):
     vendor = models.ForeignKey(
@@ -35,17 +28,21 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.PositiveIntegerField(default=0)
-    image = models.ImageField(upload_to='product_images/', null=True, blank=True)
-    # image_url = models.URLField(blank=True, null=True)
-    # cloudinary_url = models.URLField(blank=True, null=True)
     
+    # Pricing
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_percentage = models.PositiveIntegerField(default=0, help_text="Discount in % (0-100)")
+    
+    stock = models.PositiveIntegerField(default=0)
     image = CloudinaryField('image', blank=True, null=True)
+    
+    # Old ImageField kept for fallback if needed, but using CloudinaryField primarily
+    # image = models.ImageField(upload_to='product_images/', null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) # Added updated_at for tracking
     
-    # 🛑 ADDED FIELDS FOR VENDOR APPROVAL WORKFLOW
+    # APPROVAL WORKFLOW
     APPROVAL_STATUS_CHOICES = [
         ('PENDING', 'Pending Approval'),
         ('APPROVED', 'Approved'),
@@ -55,20 +52,27 @@ class Product(models.Model):
     status = models.CharField(
         max_length=10, 
         choices=APPROVAL_STATUS_CHOICES,
-        default='PENDING', # New products start as PENDING
+        default='PENDING', 
         help_text='Approval status set by Admin.'
     )
     
-    # is_published controls vendor visibility; status controls marketplace visibility.
     is_published = models.BooleanField(default=False) 
 
     def __str__(self):
-        # We assume the vendor object has a store_name field for display
         return f"{self.name} ({self.vendor.store_name})"
 
-    
+    @property
+    def discounted_price(self):
+        """
+        Calculates the price after the discount percentage is applied.
+        """
+        if self.discount_percentage > 0:
+            discount_amount = (self.price * Decimal(self.discount_percentage)) / Decimal(100)
+            return round(self.price - discount_amount, 2)
+        return self.price
+
 # -----------------------------
-# 3️⃣ Review Model
+# 3. Review Model
 # -----------------------------
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
@@ -86,5 +90,3 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.product.name} ({self.rating})"
-
-

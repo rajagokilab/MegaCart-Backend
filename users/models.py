@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from decimal import Decimal
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 
 class CustomUser(AbstractUser):
     USER_ROLES = [
@@ -8,9 +9,27 @@ class CustomUser(AbstractUser):
         ('VENDOR', 'Vendor'),
         ('ADMIN', 'Admin'),
     ]
+    
+    # ✅ NEW: Status Choices for Vendors
+    VENDOR_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    ]
+
     role = models.CharField(max_length=10, choices=USER_ROLES, default='CUSTOMER')
     store_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Keeps track of approval status (Legacy support + easy check)
     is_approved = models.BooleanField(default=False) 
+    
+    # ✅ NEW: Detailed Status Field
+    vendor_status = models.CharField(
+        max_length=10, 
+        choices=VENDOR_STATUS_CHOICES, 
+        default='PENDING'
+    )
+
     email = models.EmailField(unique=True)
     shipping_address = models.JSONField(null=True, blank=True)
     
@@ -19,6 +38,17 @@ class CustomUser(AbstractUser):
     store_logo = models.ImageField(upload_to='vendor_logos/', blank=True, null=True)
     store_banner = models.ImageField(upload_to='vendor_banners/', blank=True, null=True)
 
+    # 🆕 KYC / Business Fields
+    business_reg_id = models.CharField(max_length=50, blank=True, null=True, help_text="Tax ID, GSTIN, etc.")
+    
+    # 📂 Using Raw Storage for PDF/Doc support
+    kyc_document = models.FileField(
+        upload_to='vendor_kyc/', 
+        blank=True, 
+        null=True, 
+        help_text="Upload Business Proof",
+        storage=RawMediaCloudinaryStorage()
+    )
 
     total_sales = models.DecimalField(
         max_digits=12, 
@@ -27,17 +57,15 @@ class CustomUser(AbstractUser):
         help_text="Total gross sales for this vendor (before commission)"
     )
     
-    # ⭐️ NEW FIELD TO TRACK TOTAL EARNED (The Blue Card)
     lifetime_net_earnings = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal('0.00')
     )
     
-    # ✅ CURRENT BALANCE (The Green Card)
     available_for_payout = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00')
     )
     
-    # Manual/Automated Payment Details
+    # Payment Details
     razorpay_account_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
     account_holder_name = models.CharField(max_length=100, blank=True, null=True)
     account_number = models.CharField(max_length=50, blank=True, null=True)

@@ -76,9 +76,11 @@ class ProductAdmin(admin.ModelAdmin):
         'name', 
         'category', 
         'vendor_name', 
-        'price', 
-        'status',         # Show current status (Pending/Approved)
-        'is_published',   # Show published state
+        'price',
+        'discount_percentage', # Added to display
+        'final_price_display', # Added Calculated Column
+        'status',         
+        'is_published',
         'stock', 
         get_image_preview_tag
     )
@@ -87,22 +89,28 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'status', 'is_published')
     search_fields = ('name', 'vendor__store_name')
     
-    # Allow editing these directly in the list view (Fast Edit)
-    list_editable = ('price', 'status', 'is_published', 'stock') 
+    # ✅ UPDATE: Added 'discount_percentage' here so you can edit it directly in the list
+    list_editable = ('price', 'discount_percentage', 'status', 'is_published', 'stock') 
 
     # Layout for the "Add/Edit Product" page
     fieldsets = (
         (None, {'fields': ('name', 'category')}), 
         ('Vendor Details', {'fields': ('vendor',)}),
-        ('Pricing and Inventory', {'fields': ('price', 'stock', 'status', 'is_published')}),
+        # discount_percentage is explicitly listed here for the edit form
+        ('Pricing and Inventory', {'fields': ('price', 'discount_percentage', 'stock', 'status', 'is_published')}),
         ('Media', {'fields': ('image', get_image_preview_tag)}), 
-
     )
     
-    readonly_fields = (get_image_preview_tag,) 
+    readonly_fields = (get_image_preview_tag, 'final_price_display') 
 
-    # --- CUSTOM ACTIONS ---
     actions = ['mark_approved', 'mark_pending', 'mark_rejected', 'publish_products', 'unpublish_products']
+
+    # --- Custom Column to show discounted price ---
+    def final_price_display(self, obj):
+        if obj.discount_percentage > 0:
+            return f"{obj.discounted_price} ({obj.discount_percentage}% Off)"
+        return "-"
+    final_price_display.short_description = "Final Price"
 
     @admin.action(description="✅ Approve selected products")
     def mark_approved(self, request, queryset):
@@ -129,20 +137,17 @@ class ProductAdmin(admin.ModelAdmin):
         updated = queryset.update(is_published=False)
         self.message_user(request, f"{updated} products are now HIDDEN.")
 
-    # --- HELPER METHODS ---
     def vendor_name(self, obj):
         return obj.vendor.store_name if obj.vendor else '-'
     vendor_name.short_description = 'Vendor'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        # Only show VENDOR users in the dropdown
         if db_field.name == "vendor":
             kwargs["queryset"] = CustomUser.objects.filter(role='VENDOR')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # Only show data if user is ADMIN
         if request.user.is_authenticated and request.user.role == 'ADMIN':
             return qs
         return self.model.objects.none()

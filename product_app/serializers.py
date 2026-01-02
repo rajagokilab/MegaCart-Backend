@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from django.db import models
-from django.db.models import Sum, F # <-- 1. IMPORT Sum & F
+from django.db.models import Sum, F
 
-# --- 2. IMPORT ALL MODELS ---
+# Adjust imports based on your actual project structure if needed
 from .models import Category, Product, Review
-from order.models import Cart, CartItem, Order, OrderItem # <-- IMPORT Order & OrderItem
-from users.models import CustomUser # <-- IMPORT CustomUser
+from order.models import Cart, CartItem, Order, OrderItem
+from users.models import CustomUser
 
 # ----------------------------------------------------
-# 1. REVIEW SERIALIZER (Correct)
+# 1. REVIEW SERIALIZER
 # ----------------------------------------------------
 class ReviewSerializer(serializers.ModelSerializer):
     user_username = serializers.CharField(source='user.username', read_only=True)
@@ -24,85 +24,83 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 # ----------------------------------------------------
-# 2. PRODUCT SERIALIZER (Correct)
+# 2. PRODUCT SERIALIZER (FIXED)
 # ----------------------------------------------------
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     vendor_name = serializers.CharField(source='vendor.store_name', read_only=True)
 
     image_url = serializers.SerializerMethodField()
-    # image_url = serializers.CharField(read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
-    cloudinary_url = serializers.CharField(read_only=True) # or use SerializerMethodField here
+    review_count = serializers.SerializerMethodField()
+    cloudinary_url = serializers.CharField(read_only=True)
+    
+    # Calculated Fields
+    discounted_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    # 🚨 FIX: Explicitly define sales_count so it doesn't crash if missing from model
+    sales_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'category', 'category_name', 
             'vendor', 'vendor_name', 
-            'price', 'stock', 'image', 'image_url', 'is_published','cloudinary_url',
-            'reviews', 'average_rating', 'status','created_at'
+            'price', 
+            'discount_percentage',
+            'discounted_price',     
+            'stock', 
+            'sales_count', # ✅ Now this maps to the method below
+            'image', 'image_url', 'is_published', 'cloudinary_url',
+            'reviews', 'average_rating', 'review_count', 'status', 'created_at'
         ]
-        read_only_fields = ['vendor', 'vendor_name', 'status','created_at', 'updated_at']
-
-    # def get_image_url(self, obj):
-    #     request = self.context.get("request", None)
-    #     if obj.image:
-    #         if request:
-    #             return request.build_absolute_uri(obj.image.url)
-    #         return obj.image.url
-    #     return None
+        read_only_fields = ['vendor', 'vendor_name', 'status', 'created_at', 'updated_at', 'discounted_price']
 
     def get_image_url(self, obj):
         if obj.image:
             return obj.image.url 
         return None
 
-
     def get_average_rating(self, obj):
+        # Safe aggregation
         avg = obj.reviews.aggregate(models.Avg('rating'))['rating__avg']
-        return round(avg, 1) if avg is not None else None
+        return round(avg, 1) if avg is not None else 0
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()
+
+    # 🚨 FIX: This method handles the missing field safely
+    def get_sales_count(self, obj):
+        # If the view annotated 'sales_count', use it. Otherwise return 0.
+        return getattr(obj, 'sales_count', 0)
 
 
 # ----------------------------------------------------
-# 3. CATEGORY SERIALIZER (Correct)
-# ----------------------------------------------------
-# product_app/serializers.py
-
-# ----------------------------------------------------
-# 3. CATEGORY SERIALIZER (FIXED)
+# 3. CATEGORY SERIALIZER
 # ----------------------------------------------------
 class CategorySerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
-    
-    # 1. Rename the field to point to the new method name
     image_url = serializers.SerializerMethodField(method_name='get_category_image_url')
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'products', 'image', 'image_url'] 
 
-    # 2. Define the renamed method *INSIDE* the class block
     def get_category_image_url(self, obj):
         if obj.image:
-            # CloudinaryField returns the absolute URL via .url
             return obj.image.url 
         return None
 
 
-
-
 # ----------------------------------------------------
-# 4. 💰 --- ADMIN SERIALIZERS (These were missing) ---
+# 4. ADMIN SERIALIZERS
 # ----------------------------------------------------
-
-# --- Serializer for the Admin "Vendor Applications" list ---
 class AdminVendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'store_name', 'is_approved']
 
-# --- Serializer for nested Order Items (for the "All Orders" list) ---
 class AdminOrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_category_name = serializers.CharField(source='product.category.name', read_only=True)
@@ -114,9 +112,9 @@ class AdminOrderItemSerializer(serializers.ModelSerializer):
             'product_name', 
             'quantity', 
             'price', 
-            'product_category_name' # 💰 --- AND ADD IT HERE ---
+            'product_category_name'
         ]
-# --- Serializer for the "All Orders" list (Corrected) ---
+
 class AdminOrderSerializer(serializers.ModelSerializer):
     items = AdminOrderItemSerializer(many=True, read_only=True)
     user_email = serializers.CharField(source='user.email', read_only=True)
@@ -127,14 +125,13 @@ class AdminOrderSerializer(serializers.ModelSerializer):
         fields = [
             'id', 
             'user_email', 
-            'total_amount', # Use the method field
+            'total_amount',
             'status', 
             'items', 
             'created_at'
         ]
         
     def get_total_amount(self, obj):
-        # Calculate the total from its items
         total = obj.items.aggregate(
             total=Sum(F('quantity') * F('price'))
         )['total']

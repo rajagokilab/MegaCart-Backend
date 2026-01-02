@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- SECURITY ---
 SECRET_KEY = 'django-insecure-sa14nzjk(&%vtlek)#+r^uyo2se3jturn*xp^0bj%y=*449=p('
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # --- INSTALLED APPS ---
@@ -203,7 +203,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_ID_FIELD': 'id',
     'SERIALIZERS': {
-        'user_create': 'users.serializers.CustomUserCreateSerializer',
+        'user_create': 'users.serializers.RegisterSerializer',
         'user': 'users.serializers.CustomUserSerializer',
         'current_user': 'users.serializers.CustomUserSerializer',
         'token_create': 'djoser.serializers.TokenCreateSerializer',

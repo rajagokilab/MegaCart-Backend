@@ -1,21 +1,31 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.html import format_html
 from .models import CustomUser
+
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('email', 'username', 'role', 'store_name', 'is_approved', 'is_staff', 'is_superuser')
+    def kyc_document_link(self, obj):
+        if obj.kyc_document:
+            return format_html('<a href="{}" target="_blank">View Doc</a>', obj.kyc_document.url)
+        return "-"
+    kyc_document_link.short_description = "KYC Proof"
+    list_display = ('email', 'store_name', 'business_reg_id', 'kyc_document_link', 'is_approved')   
     list_filter = ('role', 'is_approved', 'is_staff', 'is_superuser')
     search_fields = ('email', 'username', 'store_name')
     list_editable = ('is_approved',)
     ordering = ('role', 'email')
     readonly_fields = ('last_login', 'date_joined')
 
+    
+
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password', 'role', 'store_name')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('KYC Details', {'fields': ('business_reg_id', 'kyc_document', 'is_approved')}),
     )
 
     add_fieldsets = (
